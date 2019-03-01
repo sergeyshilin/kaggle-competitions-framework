@@ -1,1 +1,10 @@
+## Common
 .DS_Store
+__pycache__
+
+## Project specific
+*.csv
+data/*
+models/*
+notebooks/*
+predictions/**/*
