@@ -47,7 +47,7 @@ data_loader.generate_split(StratifiedKFold,
 
 ## >> Create and train model
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_auc_score
 
 model_params = {
     'name':     "gaussian",
@@ -57,12 +57,8 @@ model_params = {
 }
 model = ModelLoader(GaussianNB, model_params)
 
-def roc_auc(y_true, y_pred):
-    fpr, tpr, _ = roc_curve(y_true, y_pred)
-    return auc(fpr, tpr)
-
 fit_params = {}; predict_params = {}
-results = model.run(data_loader, roc_auc, fit_params, predict_params)
+results = model.run(data_loader, roc_auc_score, fit_params, predict_params)
 
 if args.save:
     current_file_path = os.path.abspath(__file__) # to save this .py file
