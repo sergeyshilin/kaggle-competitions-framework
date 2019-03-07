@@ -30,8 +30,8 @@ class ModelLoader:
         train_path = os.path.join(preds_path, 'train', file_name) + '.csv'
         model_path = os.path.join(models_path, file_name) + '.py'
 
-        train.to_csv(test_path, index=False)
-        test.to_csv(train_path, index=False)
+        train.to_csv(train_path, index=False)
+        test.to_csv(test_path, index=False)
         shutil.copyfile(caller_path, model_path)
 
     def _set_parameters(self):
