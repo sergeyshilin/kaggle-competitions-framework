@@ -19,13 +19,6 @@ class DataLoader:
         # self._load_sample_data()
         self._load_data()
 
-    def _load_sample_data(self):
-        self.train = pd.read_csv(os.path.join(self.data_path,
-            'submission_naive_bias.csv'))
-        self.train_y = (self.train.target > 0.5).astype(np.uint8)
-        self.train_idx = self.train.index.values
-        self.test = self.train.copy()
-
     def _load_data(self):
         sys.stdout.write("Loading training data... ")
         sys.stdout.flush()
@@ -37,18 +30,25 @@ class DataLoader:
         self.test = pd.read_csv(self.test_path)
         sys.stdout.write("Done\n")
 
-        if 'target' in self.parameters:
-            self.target_name = self.parameters['target']
-            self.train_y = self.train[self.target_name].values
-            self.train.drop(self.target_name, axis=1, inplace=True)
-
-        self.train_idx = self.train.index.values
-        self.test_idx = self.test.index.values
+        self._process_target_column()
+        self._process_id_column()
 
     def _apply_preprocess(self, method):
         processor = method()
         self.train = processor.fit_transform(self.train)
         self.test = processor.transform(self.test)
+
+    def _process_target_column(self):
+        if 'target' in self.parameters:
+            self.target_name = self.parameters['target']
+            self.train_y = self.train[self.target_name].values
+            self.train.drop(self.target_name, axis=1, inplace=True)
+
+    def _process_id_column(self):
+        if 'target' in self.parameters:
+            self.id_name = self.parameters['id']
+            self.train_idx = self.train[self.id_name].values
+            self.test_idx = self.test[self.id_name].values
 
     def preprocess(self, *args):
         for method in args:
@@ -81,8 +81,23 @@ class DataLoader:
 
         return self.generator.split(self.train, self.train_y)
 
+    def get_n_splits(self):
+        if self.generator == None:
+            raise Exception("Data generator is not set")
+
+        return self.generator.get_n_splits()
+
+    def get_target(self):
+        return self.train_y
+
     def get_train(self):
         return self.train, self.train_y, self.train_idx
 
     def get_test(self):
-        return self.test
+        return self.test, self.test_idx
+
+    def get_train_ids(self):
+        return self.train_idx
+
+    def get_test_ids(self):
+        return self.test_idx
