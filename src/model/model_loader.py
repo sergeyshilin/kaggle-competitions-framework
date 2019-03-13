@@ -47,9 +47,6 @@ class ModelLoader:
             self.preds_col_num = self.parameters['pred_col']
 
     def fit(self, *args, **kwargs):
-        sys.stdout.write("Start training the model '{}'... \n".format(
-            self.model_name))
-        sys.stdout.flush()
         return getattr(self.model, self.fit_name)(*args, **kwargs)
 
     def get_parameter(self, parameter):
@@ -61,7 +58,8 @@ class ModelLoader:
     def predict(self, *args, **kwargs):
         return getattr(self.model, self.predict_name)(*args, **kwargs)
 
-    def run(self, data_loader, evaluator, fit_params, predict_params):
+    def run(self, data_loader, evaluator, fit_params, predict_params,
+          verbose=False):
         train_preds = np.zeros((len(data_loader.get_train_ids()), 1))
         test_preds = np.zeros((len(data_loader.get_test_ids()), 1))
         data_generator = data_loader.get_split()
@@ -70,6 +68,8 @@ class ModelLoader:
             X_tr, y_tr = data_loader.get_by_id('train', tr_ind)
             X_cv, y_cv = data_loader.get_by_id('train', cv_ind)
 
+            if verbose: print("Start training the model '{}'... \n".format(
+                self.model_name))
             self.fit(X_tr, y_tr, **fit_params)
             preds_cv = self.predict(X_cv, **predict_params)
             preds_cv = preds_cv[:, self.get_preds_col_number()]
@@ -78,7 +78,7 @@ class ModelLoader:
             preds_test_cur = preds_test_cur[:, self.get_preds_col_number()]
 
             accuracy = evaluator(y_cv, preds_cv)
-            print("Fold #{}: {}\n".format(fold + 1, accuracy))
+            if verbose: print("Fold #{}: {}\n".format(fold + 1, accuracy))
 
             train_preds[cv_ind, :] = preds_cv.reshape((-1, 1))
             test_preds += preds_test_cur.reshape((-1, 1))
@@ -86,7 +86,7 @@ class ModelLoader:
         test_preds = test_preds / data_loader.get_n_splits()
 
         overall = evaluator(data_loader.get_target(), train_preds)
-        print("Overall accuracy: {}\n".format(overall))
+        if verbose: print("Overall accuracy: {}\n".format(overall))
         return test_preds, train_preds, overall
 
     def save(self, data_loader, results, caller_path, preds_path, models_path):
