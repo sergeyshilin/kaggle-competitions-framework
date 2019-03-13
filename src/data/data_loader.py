@@ -13,9 +13,6 @@ class DataLoader:
         self.train_path = os.path.join(self.data_path, 'train.csv')
         self.test_path = os.path.join(self.data_path, 'test.csv')
 
-        self.sample_submission = pd.read_csv(
-            os.path.join(self.data_path, 'sample_submission.csv'))
-
         # self._load_sample_data()
         self._load_data()
 
@@ -50,9 +47,9 @@ class DataLoader:
             self.train_idx = self.train[self.id_name].values
             self.test_idx = self.test[self.id_name].values
 
-    def preprocess(self, *args):
-        for method in args:
-            self._apply_preprocess(method)
+    def freeze_data(self):
+        self._frozen = (self.train, self.train_y, self.test,
+            self.train_idx, self.test_idx)
 
     def generate_split(self, method, *args, **kwargs):
         self.generator = method(*args, **kwargs)
@@ -68,12 +65,11 @@ class DataLoader:
         elif dtype == 'test' and isinstance(self.test, pd.DataFrame):
             return self.test.iloc[ids]
 
+    def get_columns(self):
+        return self.train.columns
 
     def get_parameter(self, parameter):
         return self.parameters[parameter]
-
-    def get_sample_submission(self):
-        return self.sample_submission
 
     def get_split(self):
         if self.generator == None:
@@ -101,3 +97,11 @@ class DataLoader:
 
     def get_test_ids(self):
         return self.test_idx
+
+    def preprocess(self, *args):
+        for method in args:
+            self._apply_preprocess(method)
+
+    def restore_frozen(self):
+        self.train, self.train_y, self.test, self.train_idx, self.test_idx = \
+            self._frozen
