@@ -8,7 +8,7 @@ class GenericDataPreprocessor:
     def __init__(self): raise NotImplementedError
 
     @abstractmethod
-    def fit_transform(self, data): raise NotImplementedError
+    def fit_transform(self, data_x, data_y = None): raise NotImplementedError
 
     @abstractmethod
     def transform(self, data): raise NotImplementedError

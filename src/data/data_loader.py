@@ -32,7 +32,7 @@ class DataLoader:
 
     def _apply_preprocess(self, method):
         processor = method()
-        self.train = processor.fit_transform(self.train)
+        self.train = processor.fit_transform(self.train, self.train_y)
         self.test = processor.transform(self.test)
 
     def _process_target_column(self):
