@@ -8,18 +8,18 @@ class GenericDataPreprocessor:
     def __init__(self): raise NotImplementedError
 
     @abstractmethod
-    def fit_transform(self, data_x, data_y = None): raise NotImplementedError
+    def fit_transform(self, X, y=None): raise NotImplementedError
 
     @abstractmethod
-    def transform(self, data): raise NotImplementedError
+    def transform(self, X): raise NotImplementedError
 
 
 class ToNumpy(GenericDataPreprocessor):
     def __init__(self):
         pass
 
-    def fit_transform(self, data):
-        return data.values
+    def fit_transform(self, X, y=None):
+        return X.values
 
-    def transform(self, data):
-        return data.values
+    def transform(self, X):
+        return X.values
