@@ -17,6 +17,7 @@ class ModelLoader:
         self.fit_name = 'fit'
         self.predict_name = 'predict'
         self.preds_col_num = 0
+        self.online_val_func = None
 
     def _save_files(self, train, test, accuracy,
           caller_path, preds_path, models_path):
@@ -45,6 +46,8 @@ class ModelLoader:
             self.predict_name = self.parameters['predict']
         if 'pred_col' in self.parameters:
             self.preds_col_num = self.parameters['pred_col']
+        if 'online_val' in self.parameters:
+            self.online_val_func = self.parameters['online_val']
 
     def fit(self, *args, **kwargs):
         return getattr(self.model, self.fit_name)(*args, **kwargs)
@@ -70,6 +73,10 @@ class ModelLoader:
 
             if verbose: print("Start training the model '{}'... \n".format(
                 self.model_name))
+
+            if self.online_val_func:
+                fit_params[self.online_val_func] = (X_cv, y_cv)
+
             self.fit(X_tr, y_tr, **fit_params)
             preds_cv = self.predict(X_cv, **predict_params)
             preds_cv = preds_cv[:, self.get_preds_col_number()]
