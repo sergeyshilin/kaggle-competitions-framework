@@ -32,8 +32,11 @@ class DataLoader:
 
     def _apply_preprocess(self, method, **preprocessor_params):
         processor = method(**preprocessor_params)
+        sys.stdout.write("Applying preprocessor {}... ".format(method.__name__))
+        sys.stdout.flush()
         self.train = processor.fit_transform(self.train, self.train_y)
         self.test = processor.transform(self.test)
+        sys.stdout.write("Done\n")
 
     def _process_target_column(self):
         if 'target' in self.parameters:
