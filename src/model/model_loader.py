@@ -11,6 +11,7 @@ class ModelLoader:
         self.parameters = model_params
         self.model = model(*args, **kwargs)
         self._set_parameters()
+        self.online_preprocessors = {}
 
     def _init_default_parameters(self):
         self.model_name = 'defaultmodel'
@@ -18,6 +19,14 @@ class ModelLoader:
         self.predict_name = 'predict'
         self.preds_col_num = 0
         self.online_val_func = None
+
+    def _apply_preprocessors(self, X, y, X_cv):
+        for method, params in self.online_preprocessors.items():
+            processor = method(**params)
+            X = processor.fit_transform(X, y)
+            X_cv = processor.transform(X_cv)
+
+        return X, X_cv
 
     def _save_files(self, train, test, accuracy,
           caller_path, preds_path, models_path):
@@ -61,6 +70,10 @@ class ModelLoader:
     def predict(self, *args, **kwargs):
         return getattr(self.model, self.predict_name)(*args, **kwargs)
 
+    def preprocess_online(self, *args, **preprocessor_params):
+        for method in args:
+            self.online_preprocessors[method] = preprocessor_params
+
     def run(self, data_loader, evaluator, fit_params, predict_params,
           verbose=False):
         train_preds = np.zeros((len(data_loader.get_train_ids()), 1))
@@ -70,6 +83,8 @@ class ModelLoader:
         for fold, (tr_ind, cv_ind) in enumerate(data_generator):
             X_tr, y_tr = data_loader.get_by_id('train', tr_ind)
             X_cv, y_cv = data_loader.get_by_id('train', cv_ind)
+
+            X_tr, X_cv = self._apply_preprocessors(X_tr, y_tr, X_cv)
 
             if verbose: print("Start training the model '{}'... \n".format(
                 self.model_name))
