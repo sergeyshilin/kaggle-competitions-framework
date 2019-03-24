@@ -30,7 +30,7 @@ class DataLoader:
         self._process_target_column()
         self._process_id_column()
 
-    def _apply_preprocess(self, method, **preprocessor_params):
+    def _apply_preprocessors(self, method, **preprocessor_params):
         processor = method(**preprocessor_params)
         sys.stdout.write("Applying preprocessor {}... ".format(method.__name__))
         sys.stdout.flush()
@@ -103,7 +103,7 @@ class DataLoader:
 
     def preprocess(self, *args, **preprocessor_params):
         for method in args:
-            self._apply_preprocess(method, **preprocessor_params)
+            self._apply_preprocessors(method, **preprocessor_params)
 
     def restore_frozen(self):
         self.train, self.train_y, self.test, self.train_idx, self.test_idx = \
