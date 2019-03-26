@@ -47,57 +47,49 @@ data_loader.generate_split(StratifiedKFold,
 ## << Read and preprocess data
 
 ## >> Create and train model
-import lightgbm as lgb
+import xgboost as xgb
 from sklearn.metrics import roc_auc_score
 
 model_params = {
-    'name':          "lightgbm",
+    'name':          "xgboost",
     'fit':           "fit",
-    'predict':       "predict",
+    'predict':       "predict_proba",
     'pred_col':      1,
+    'online_val':    "eval_set"
 }
 
-class LightGbmTrainer:
-    def __init__(self):
-        self.lgb_params = {
-            "objective" : "binary",
-            "metric" : "auc",
-            "boosting": 'gbdt',
-            "max_depth" : -1,
-            "num_leaves" : 13,
-            "learning_rate" : 0.01,
-            "bagging_freq": 5,
-            "bagging_fraction" : 0.4,
-            "feature_fraction" : 0.05,
-            "min_data_in_leaf": 80,
-            "min_sum_heassian_in_leaf": 10,
-            "tree_learner": "serial",
-            "boost_from_average": "false",
-            "bagging_seed" : 42,
-            "verbosity" : 1,
-            "seed": 42
-        }
+xgboost_params = {
+    'objective': 'binary:logistic',
+    'eval_metric': 'auc',
+    'silent': True,
+    'booster': 'gbtree',
+    'n_jobs': -1,
+    'n_estimators': 20000,
+    'grow_policy': 'lossguide',
+    'max_depth': 5,
+    'max_delta_step': 2,
+    'seed': 42,
+    'colsample_bylevel': 0.7,
+    'colsample_bytree': 0.1,
+    'gamma': 1.5,
+    'learning_rate': 0.02,
+    'max_leaves': 23,
+    'min_child_weight': 64,
+    'reg_alpha': 0.95,
+    'reg_lambda': 50.0,
+    'subsample': 0.25
+}
 
-    def fit(self, train, cv):
-        x_tr, y_tr = train
-        x_cv, y_cv = cv
-        trn_data = lgb.Dataset(x_tr, label=y_tr)
-        val_data = lgb.Dataset(x_cv, label=y_cv)
-        evals_result = {}
-        self.model = lgb.train(self.lgb_params,
-                        trn_data,
-                        100,
-                        valid_sets = [trn_data, val_data],
-                        early_stopping_rounds=3000,
-                        verbose_eval = 10,
-                        evals_result=evals_result)
+model = ModelLoader(xgb.XGBClassifier, model_params, **xgboost_params)
 
-    def predict(self, test):
-        return self.model.predict(test)
+fit_params = {
+    'early_stopping_rounds': 2500,
+    'verbose': 1000
+}
+predict_params = {}
 
-
-model = ModelLoader(LightGbmTrainer, model_params)
-results = model.run(data_loader, roc_auc_score, {}, {}, verbose=True)
+results = model.run(data_loader, roc_auc_score, fit_params,
+    predict_params, verbose=True)
 
 if args.save:
     current_file_path = os.path.abspath(__file__) # to save this .py file
