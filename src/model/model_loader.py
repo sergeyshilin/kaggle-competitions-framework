@@ -58,8 +58,17 @@ class ModelLoader:
         if 'online_val' in self.parameters:
             self.online_val_func = self.parameters['online_val']
 
-    def fit(self, *args, **kwargs):
-        return getattr(self.model, self.fit_name)(*args, **kwargs)
+    def fit(self, train, cv, **kwargs):
+        if not hasattr(self.model, self.fit_name):
+            raise NotImplementedError("Fit method is not implemented")
+
+        try:
+            fit_result = getattr(self.model, self.fit_name)(*train, **kwargs)
+        except:
+            fit_result = getattr(self.model, self.fit_name)(train, cv)
+        finally:
+            return fit_result
+
 
     def get_parameter(self, parameter):
         return self.parameters[parameter]
@@ -68,7 +77,12 @@ class ModelLoader:
         return self.preds_col_num
 
     def predict(self, *args, **kwargs):
-        return getattr(self.model, self.predict_name)(*args, **kwargs)
+        predict_result = getattr(self.model, self.predict_name)(*args, **kwargs)
+
+        if len(predict_result.shape) > 1:
+            return predict_result[:, self.get_preds_col_number()]
+
+        return predict_result
 
     def preprocess_online(self, *args, **preprocessor_params):
         for method in args:
@@ -92,12 +106,10 @@ class ModelLoader:
             if self.online_val_func:
                 fit_params[self.online_val_func] = (X_cv, y_cv)
 
-            self.fit(X_tr, y_tr, **fit_params)
-            preds_cv = self.predict(X_cv, **predict_params)
-            preds_cv = preds_cv[:, self.get_preds_col_number()]
+            self.fit((X_tr, y_tr), (X_cv, y_cv), **fit_params)
 
+            preds_cv = self.predict(X_cv, **predict_params)
             preds_test_cur = self.predict(data_loader.test, **predict_params)
-            preds_test_cur = preds_test_cur[:, self.get_preds_col_number()]
 
             accuracy = evaluator(y_cv, preds_cv)
             if verbose: print("Fold #{}: {}\n".format(fold + 1, accuracy))
