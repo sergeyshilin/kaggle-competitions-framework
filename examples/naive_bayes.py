@@ -29,11 +29,11 @@ class DropColumns(GenericDataPreprocessor):
     def __init__(self):
         pass
 
-    def fit_transform(self, data):
-        return data.drop(['ID_code'], axis=1)
+    def fit_transform(self, X, y=None):
+        return self.transform(X)
 
-    def transform(self, data):
-        return data.drop(['ID_code'], axis=1)
+    def transform(self, X):
+        return X.drop(['ID_code'], axis=1)
 
 dl_params = {
     'target': "target",
@@ -58,7 +58,8 @@ model_params = {
 model = ModelLoader(GaussianNB, model_params)
 
 fit_params = {}; predict_params = {}
-results = model.run(data_loader, roc_auc_score, fit_params, predict_params)
+results = model.run(data_loader, roc_auc_score, fit_params,
+    predict_params, verbose=True)
 
 if args.save:
     current_file_path = os.path.abspath(__file__) # to save this .py file
