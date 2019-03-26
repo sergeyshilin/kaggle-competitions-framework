@@ -5,6 +5,8 @@ import pandas as pd
 import datetime
 import shutil
 
+from .generic_model import GenericModel
+
 
 class ModelLoader:
     def __init__(self, model, model_params, *args, **kwargs):
@@ -62,13 +64,10 @@ class ModelLoader:
         if not hasattr(self.model, self.fit_name):
             raise NotImplementedError("Fit method is not implemented")
 
-        try:
-            fit_result = getattr(self.model, self.fit_name)(*train, **kwargs)
-        except:
-            fit_result = getattr(self.model, self.fit_name)(train, cv)
-        finally:
-            return fit_result
-
+        if isinstance(self.model, GenericModel):
+            return getattr(self.model, self.fit_name)(train, cv)
+        else:
+            return getattr(self.model, self.fit_name)(*train, **kwargs)
 
     def get_parameter(self, parameter):
         return self.parameters[parameter]
@@ -104,7 +103,7 @@ class ModelLoader:
                 self.model_name))
 
             if self.online_val_func:
-                fit_params[self.online_val_func] = (X_cv, y_cv)
+                fit_params[self.online_val_func] = [(X_cv, y_cv)]
 
             self.fit((X_tr, y_tr), (X_cv, y_cv), **fit_params)
 
