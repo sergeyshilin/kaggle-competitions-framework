@@ -25,10 +25,10 @@ class ModelLoader:
     def _apply_preprocessors(self, X, y, X_cv):
         for method, params in self.online_preprocessors.items():
             processor = method(**params)
-            X = processor.fit_transform(X, y)
+            X, y = processor.fit_transform(X, y)
             X_cv = processor.transform(X_cv)
 
-        return X, X_cv
+        return X, y, X_cv
 
     def _save_files(self, train, test, accuracy,
           caller_path, preds_path, models_path):
@@ -97,7 +97,7 @@ class ModelLoader:
             X_tr, y_tr = data_loader.get_by_id('train', tr_ind)
             X_cv, y_cv = data_loader.get_by_id('train', cv_ind)
 
-            X_tr, X_cv = self._apply_preprocessors(X_tr, y_tr, X_cv)
+            X_tr, y_tr, X_cv = self._apply_preprocessors(X_tr, y_tr, X_cv)
 
             if verbose: print("Start training the model '{}'... \n".format(
                 self.model_name))
