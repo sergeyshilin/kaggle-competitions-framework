@@ -2,7 +2,7 @@
 Framework for fast prototyping and training of single models and ensembles.
 Training happens according to a data generator you pass in, but initially designed to take a K-Fold split in order to produce both OOF and test predictions.
 
-Below you can find a short API explanation, however it does not cover all the needs 
+Below you can find a short API explanation, however it does not cover all the possible use cases. For more information, please check out [examples](examples/).
 
 ## Data Loader
 ### Initialization
@@ -74,12 +74,80 @@ nn_params = {
 model = ModelLoader(KerasClassifier, loader_params, **nn_params)
 ```
 
+### Initialize a custom model
 
-To run a training of a single model it is only required to specify 3 parameters:
-- path to data folder (where to get `train.csv` and `test.csv` from)
-- path to models folder (where to save code sources to be able to reproduce your predictions later)
-- path to predictions folder (for future stacking/blending)
+If the model does not have a sklearn-like interface, it is still possible to create a custom model interface, inherited from `GenericModel` base class. `fit` and `predict` function must be implemented as following
 
-```bash
-python src/single_model.py --data 'data/' --models 'models/' --preds 'predictions/'
+```python
+class LightGbmTrainer(GenericModel):
+    def __init__(self):
+        self.lgb_params = {
+            "objective" : "binary",
+            "metric" : "auc",
+            "boosting": 'gbdt',
+            "max_depth" : 4,
+            "learning_rate" : 0.01,
+            "bagging_fraction" : 0.8,
+            "tree_learner": "serial",
+            "verbosity" : 0,
+        }
+
+    def fit(self, train, cv):
+        x_tr, y_tr = train
+        x_cv, y_cv = cv
+        trn_data = lgb.Dataset(x_tr, label=y_tr)
+        val_data = lgb.Dataset(x_cv, label=y_cv)
+        evals_result = {}
+        self.model = lgb.train(self.lgb_params,
+                        trn_data,
+                        100000,
+                        valid_sets = [trn_data, val_data],
+                        early_stopping_rounds=3000,
+                        verbose_eval = 1000,
+                        evals_result=evals_result)
+
+    def predict(self, test):
+        return self.model.predict(test)
+
+
+model_params = {
+    'name':          "lightgbm",
+    'fit':           "fit",
+    'predict':       "predict"
+}
+
+model = ModelLoader(LightGbmTrainer, model_params)
 ```
+
+### Run training
+```python
+fit_params = {
+    'use_best_model': True,
+    'verbose': 100,
+    'plot': True
+}
+predict_params = {}
+
+from sklearn.metrics import roc_auc_score
+results = model.run(data_loader, roc_auc_score, fit_params,
+    predict_params, verbose=True)
+```
+
+### Save results
+
+```python
+current_file_path = os.path.abspath(__file__) # to save this .py file
+model.save(data_loader, results, current_file_path, preds_folder, models_folder)
+```
+
+Where 
+
+`models_folder` is a path where to save code sources to be able to reproduce your predictions later. In other words, it places your `current_file_path` into `models_folder`
+`preds_folder` is a path to predictions folder (for future stacking/blending)
+
+
+## Contribution
+
+Feel free to send your pull request if would like anything to be improved.
+
+We also use GitHub issues to track requests and bugs.
