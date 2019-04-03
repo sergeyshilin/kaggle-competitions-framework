@@ -4,8 +4,21 @@ Training happens according to a data generator you pass in, but initially design
 
 Below you can find a short API explanation, however it does not cover all the possible use cases. For more information, please check out [examples](examples/).
 
+## Table of Contents
+- [Data Loader](#data-loader)
+  - [Initialization](#data-loader-initialization)
+  - [Data Preprocessors](#data-preprocessors)
+  - [Data Generator](#data-generator)
+- [Model Loader](#model-loader)
+  - [Initialization](#model-loader-initialization)
+  - [Initialize a custom model](#initialize-a-custom-model)
+  - [Run training](#run-training)
+  - [Save results](#save-results)
+- [Contribution](#contribution)
+
+
 ## Data Loader
-### Initialization
+### Data Loader Initialization
 ```python
 from data import DataLoader
 
@@ -53,7 +66,7 @@ data_loader.generate_split(StratifiedKFold,
 ```
 
 ## Model Loader
-### Initialization
+### Model Loader Initialization
 
 Models are initialized with three main arguments, the model class, loader parameters and the model parameters.
 ```python
@@ -144,7 +157,6 @@ Where
 
 `models_folder` is a path where to save code sources to be able to reproduce your predictions later. In other words, it places your `current_file_path` into `models_folder`
 `preds_folder` is a path to predictions folder (for future stacking/blending)
-
 
 ## Contribution
 
